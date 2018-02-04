@@ -94,7 +94,7 @@ FILE(GLOB TARGET_HEADERS
 # BEGIN Library Settings ----------------------------------------------------------------------------------------------------------------------------
 # For Visual studio this call must be before ADD_EXECUTABLE
 link_directories(
-    /${PROJECT_SOURCE_DIR}/../build/Debug/
+    ${PROJECT_SOURCE_DIR}/../build/Debug/
 )
 # END Library Settings ------------------------------------------------------------------------------------------------------------------------------
 
