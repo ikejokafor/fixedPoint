@@ -68,7 +68,7 @@ SET_PROPERTY(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT $
 
 # BEGIN External CMake files ------------------------------------------------------------------------------------------------------------------------
 # Make sure include and lib directories are relative to home dir of this cmake file
-#ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}<path_to_cmakefile> <target_name>)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/example)
 # END External CMake files --------------------------------------------------------------------------------------------------------------------------
 
 

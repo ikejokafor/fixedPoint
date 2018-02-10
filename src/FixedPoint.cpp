@@ -359,6 +359,10 @@ FixedPoint operator/(FixedPoint &operand0, FixedPoint &operand1) {
 
 
 FixedPoint& FixedPoint::operator=(const FixedPoint &obj) {
+    if(m_length != obj.m_length || m_numFracBits != obj.m_numFracBits) {
+        cout << "[ERROR]: assignment of two different parameters" << endl;
+        exit(1);
+    }
 	m_value = obj.m_value;
 	m_length = obj.m_length;
 	m_numFracBits = obj.m_numFracBits;
@@ -367,6 +371,10 @@ FixedPoint& FixedPoint::operator=(const FixedPoint &obj) {
 
 
 bool operator<(const FixedPoint &operand0, const FixedPoint &operand1) {
+    if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
+        cout << "[ERROR]: comparison of two different parameters" << endl;
+        exit(1);
+    }
 	if (operand0.m_value < operand1.m_value) {
 		return true;
 	} else {
@@ -376,6 +384,10 @@ bool operator<(const FixedPoint &operand0, const FixedPoint &operand1) {
 
 
 bool operator<=(const FixedPoint &operand0, const FixedPoint &operand1) {
+    if(operand0.m_length != operand0.m_length || operand1.m_numFracBits !=  operand1.m_numFracBits) {
+        cout << "[ERROR]: comparison of two different parameters" << endl;
+        exit(1);
+    }
 	if (operand0.m_value <= operand1.m_value) {
 		return true;
 	} else {
@@ -385,6 +397,10 @@ bool operator<=(const FixedPoint &operand0, const FixedPoint &operand1) {
 
 
 bool operator>(const FixedPoint &operand0, const FixedPoint &operand1) {
+    if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
+        cout << "[ERROR]: comparison of two different parameters" << endl;
+        exit(1);
+    }
 	if (operand0.m_value > operand1.m_value) {
 		return true;
 	} else {
@@ -394,6 +410,10 @@ bool operator>(const FixedPoint &operand0, const FixedPoint &operand1) {
 
 
 bool operator>=(const FixedPoint &operand0, const FixedPoint &operand1) {
+    if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
+        cout << "[ERROR]: comparison of two different parameters" << endl;
+        exit(1);
+    }
 	if (operand0.m_value >= operand1.m_value) {
 		return true;
 	} else {
@@ -403,6 +423,10 @@ bool operator>=(const FixedPoint &operand0, const FixedPoint &operand1) {
 
 
 bool operator==(const FixedPoint &operand0, const FixedPoint &operand1) {
+    if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
+        cout << "[ERROR]: comparison of two different parameters" << endl;
+        exit(1);
+    }
 	if (operand0.m_value == operand1.m_value) {
 		return true;
 	} else {
@@ -412,6 +436,10 @@ bool operator==(const FixedPoint &operand0, const FixedPoint &operand1) {
 
 
 bool operator!=(const FixedPoint &operand0, const FixedPoint &operand1) {
+    if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
+        cout << "[ERROR]: comparison of two different parameters" << endl;
+        exit(1);
+    }
 	if (operand0.m_value != operand1.m_value) {
 		return true;
 	} else {

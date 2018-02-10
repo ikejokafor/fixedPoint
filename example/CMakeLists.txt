@@ -69,7 +69,7 @@ SET_PROPERTY(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT $
 
 # BEGIN External CMake files ------------------------------------------------------------------------------------------------------------------------
 # Make sure include and lib directories are relative to home dir of this cmake file
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/../ fixedPoint)
+#ADD_SUBDIRECTORY()
 # END External CMake files --------------------------------------------------------------------------------------------------------------------------
 
 
@@ -152,11 +152,9 @@ TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
 else()
 TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
 	-L/usr/local/lib/
-	-L/usr/lib/
+    -L/usr/lib/
     -L${PROJECT_SOURCE_DIR}/../build/debug/
-    libfixedPoint
-    #<lib1_name>
-    #<libN_name>
+    -lfixedpoint
 )
 endif()
 # END Library Settings ------------------------------------------------------------------------------------------------------------------------------
