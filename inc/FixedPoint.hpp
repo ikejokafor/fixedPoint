@@ -1,14 +1,15 @@
-#ifndef __FIXED_POINT_H__
-#define __FIXED_POINT_H__
+#ifndef __FIXED_POINT_HPP__
+#define __FIXED_POINT_HPP__
 
 #define MAX_FIXED_POINT_WIDTH	64
 #define DEFAULT_FRAC_WIDTH		32
 
 #include <stdint.h>
 #include <iostream>
+#include <math.h>
 
 #ifndef NDEBUG
-#   define ASSERT(condition, message) \
+#define ASSERT(condition, message) \
     do { \
         if (! (condition)) { \
             std::cerr << "Assertion `" #condition "` failed in " << __FILE__ \
@@ -31,6 +32,7 @@
 //
 //		Warnings about casting from unsigned numbers to signed numbers can be ignored
 //
+//      For mult() or div() ensure that the length, and numFracbits passed in is less than or equal to the products length or numFracBits
 //
 
 class FixedPoint {
@@ -53,12 +55,16 @@ class FixedPoint {
 		void SetParam(int length, int numFracBits);
 		float toFloat();
 		static float toFloat(int64_t value, int length, int numFracBits);
-		FixedPoint mult(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits);
-		FixedPoint div(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits);
+		static FixedPoint mult(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits);
+		static FixedPoint div(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits);
 		friend FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator-(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator*(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator/(FixedPoint &operand0, FixedPoint &operand1);
+        FixedPoint& operator+=(FixedPoint &rhs);
+        FixedPoint& operator-=(FixedPoint &rhs);
+        FixedPoint& operator*=(FixedPoint &rhs);
+        FixedPoint& operator/=(FixedPoint &rhs);
 		FixedPoint &operator=(const FixedPoint &obj);
 		friend bool operator<(const FixedPoint &operand0, const FixedPoint &operand1);
 		friend bool operator<=(const FixedPoint &operand0, const FixedPoint &operand1);
@@ -68,7 +74,7 @@ class FixedPoint {
 		friend bool operator!=(const FixedPoint &operand0, const FixedPoint &operand1);
 		friend std::ostream& operator<<(std::ostream& o, FixedPoint value);
 
-		int64_t		m_value;
+		int64_t		m_value;    // need to use signed number for two's complement arithmetic
 		int			m_numFracBits;
 		int			m_length;
 
