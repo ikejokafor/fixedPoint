@@ -56,7 +56,6 @@ class FixedPoint {
 		float toFloat();
 		static float toFloat(int64_t value, int length, int numFracBits);
 		static FixedPoint mult(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits);
-		static FixedPoint div(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits);
 		friend FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator-(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator*(FixedPoint &operand0, FixedPoint &operand1);

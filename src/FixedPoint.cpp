@@ -33,6 +33,7 @@ FixedPoint::FixedPoint(int length, int numFracBits) {
 FixedPoint::FixedPoint(int length, int numFracBits, int64_t value) {
 	m_length = length;
 	m_numFracBits = numFracBits;
+	// take magnitude and set frac bits to 0
 	uint64_t m_value_tmp = ~(uint64_t)value + (uint64_t)1;
 	m_value_tmp = (m_value_tmp << numFracBits);
 	m_value = ~m_value_tmp + (uint64_t)1;
@@ -42,6 +43,7 @@ FixedPoint::FixedPoint(int length, int numFracBits, int64_t value) {
 FixedPoint::FixedPoint(int length, int numFracBits, float value) {
 	m_length = length;
 	m_numFracBits = numFracBits;
+	// convert to fixed point
 	m_value = (int64_t)ceil((float)(value * pow((float)2, numFracBits)));
 }
 
@@ -108,14 +110,14 @@ void FixedPoint::SetParam(int length, int numFracBits) {
 	} 
 	m_numFracBits = numFracBits;
 
-	if (currentNumIntBits > newNumIntBits) {
+	if (!sign_bit && newNumIntBits < currentNumIntBits) {
 		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
 		mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
 		intPart = intPart & mask;
-	} else if (currentNumIntBits < newNumIntBits && sign_bit != 0) {
+	} else if (sign_bit && newNumIntBits < currentNumIntBits) {
 		// sign extend
 		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-		mask = mask << (currentNumIntBits);
+		mask = mask << (newNumIntBits);
 		intPart = intPart | mask;
 	}
 	m_length = length;
@@ -205,59 +207,8 @@ float FixedPoint::toFloat(int64_t value, int length, int numFracBits) {
 
 FixedPoint FixedPoint::mult(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits) {
 	int64_t result = operand0.m_value * operand1.m_value;
-    int result_numFracBits = operand0.m_numFracBits + operand1.m_numFracBits;
-    result = result >> (result_numFracBits - numFracBits);
-	int64_t result_tmp = result;
-
-	if (operand0.GetValue() != 0) {
-		// mask to get valid part of result_tmp
-		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-		mask = mask >> (MAX_FIXED_POINT_WIDTH - length);
-		result_tmp = result_tmp & mask;
-
-		// sign extend if necessary  for result_tmp
-		mask = 0xFFFFFFFFFFFFFFFF;
-		mask = mask << length;
-		uint64_t result_sign_bit = (FixedPoint::GetIntPart(result_tmp, length, (operand0.m_numFracBits + operand1.m_numFracBits))) >> (length - (operand1.m_numFracBits + operand1.m_numFracBits) - 1);
-		if (result_sign_bit != 0) {
-			result_tmp = result_tmp | mask;
-		}
-
-		// use result_tmp to check for overflow	
-		if (result_tmp / operand0.GetValue() != operand1.GetValue()) {
-			cout << "OverFlow in Multiplication: operands are " << operand0 << " and " << operand1 << endl;
-			exit(1);
-		}
-	}
-
-	return FixedPoint(length, (operand0.m_numFracBits + operand1.m_numFracBits), result);
-}
-
-
-FixedPoint FixedPoint::div(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits) {
-	int64_t result = operand0.m_value / operand1.m_value;
-	int64_t result_tmp = result;
-
-	// mask to get valid part of result_tmp
-	uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask >> (MAX_FIXED_POINT_WIDTH - length);
-	result_tmp = result_tmp & mask;
-
-	// sign extend if necessary for result_tmp
-	mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask << length;
-	uint64_t result_sign_bit = (operand0.GetIntPart(result, length, operand0.m_numFracBits)) >> (length - operand0.m_numFracBits - 1);
-	if (result_sign_bit != 0) {
-		result_tmp = result_tmp | mask;
-	}
-
-	// use result_tmp to check for overflow
-	if (result_tmp * operand0.GetValue() != operand1.GetValue()) {
-		cout << "OverFlow in Division: operands are " << operand0 << " and " << operand1 << endl;
-		exit(1);
-	}
-
-	return FixedPoint(length, operand0.m_numFracBits, result);
+    result = result >> ((operand0.m_numFracBits + operand1.m_numFracBits) - numFracBits);
+	return FixedPoint(length, numFracBits, result);
 }
 
 
@@ -270,9 +221,6 @@ FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1) {
 	if ((operand0_sign_bit == 0 && operand1_sign_bit == 0 && result_sign_bit != 0)
 		|| (operand0_sign_bit != 0 && operand1_sign_bit != 0 && result_sign_bit == 0)) {
 		cout << "OverFlow in Addition: operands are " << operand0 << " and " << operand1 << endl;
-		FILE *fd = fopen("errolog.txt", "w");
-		fprintf(fd, "OverFlow in Addition: operands are %llu and %llu", operand0, operand1);
-		fclose(fd);
 		exit(1);
 	}
 
@@ -289,9 +237,6 @@ FixedPoint operator-(FixedPoint &operand0, FixedPoint &operand1) {
 	if ((operand0_sign_bit == 0 && operand1_sign_bit != 0 && result_sign_bit != 0)
 		|| (operand0_sign_bit != 0 && operand1_sign_bit == 0 && result_sign_bit == 0)) {
 		cout << "OverFlow in subtraction: operands are " << operand0 << " and " << operand1 << endl;
-		FILE *fd = fopen("errolog.txt", "w");
-		fprintf(fd, "OverFlow in subtraction: operands are %llu and %llu", operand0, operand1);
-		fclose(fd);
 		exit(1);
 	}
 
@@ -320,9 +265,6 @@ FixedPoint operator*(FixedPoint &operand0, FixedPoint &operand1) {
 		// use result_tmp to check for overflow	
 		if (result_tmp / operand0.GetValue() != operand1.GetValue()) {
 			cout << "OverFlow in Multiplication: operands are " << operand0 << " and " << operand1 << endl;
-			FILE *fd = fopen("errolog.txt", "w");
-			fprintf(fd, "OverFlow in Multiplication: operands are %llu and %llu", operand0, operand1);
-			fclose(fd);
 			exit(1);
 		}
 	}
@@ -333,30 +275,6 @@ FixedPoint operator*(FixedPoint &operand0, FixedPoint &operand1) {
 
 FixedPoint operator/(FixedPoint &operand0, FixedPoint &operand1) {
 	int64_t result = operand0.m_value / operand1.m_value;
-	int64_t result_tmp = result;
-
-	// mask to get valid part of result_tmp
-	uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask >> (MAX_FIXED_POINT_WIDTH - operand0.m_length);
-	result_tmp = result_tmp & mask;
-
-	// sign extend if necessary for result_tmp
-	mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask << (operand0.m_length);
-	uint64_t result_sign_bit = (operand0.GetIntPart(result, operand0.m_length, operand0.m_numFracBits)) >> (operand0.m_length - operand0.m_numFracBits - 1);
-	if (result_sign_bit != 0){
-		result_tmp = result_tmp | mask;
-	}
-
-	// use result_tmp to check for overflow
-	if (result_tmp * operand0.GetValue() != operand1.GetValue()) {
-		cout << "OverFlow in Division: operands are " << operand0 << " and " << operand1 << endl;
-		FILE *fd = fopen("errolog.txt", "w");
-		fprintf(fd, "OverFlow in Division: operands are %llu and %llu", operand0, operand1);
-		fclose(fd);
-		exit(1);
-	}
-
 	return FixedPoint(operand0.m_length, operand0.m_numFracBits, result);
 }
 
@@ -370,9 +288,6 @@ FixedPoint& FixedPoint::operator+=(FixedPoint &rhs) {
 	if ((operand0_sign_bit == 0 && rhs_sign_bit == 0 && result_sign_bit != 0)
 		|| (operand0_sign_bit != 0 && rhs_sign_bit != 0 && result_sign_bit == 0)) {
 		cout << "OverFlow in Addition: operands are " << (*this) << " and " << rhs << endl;
-		FILE *fd = fopen("errolog.txt", "w");
-		fprintf(fd, "OverFlow in Addition: operands are %llu and %llu", (*this), rhs);
-		fclose(fd);
 		exit(1);
 	}
 
@@ -389,9 +304,6 @@ FixedPoint& FixedPoint::operator-=(FixedPoint &rhs) {
 	if ((operand0_sign_bit == 0 && rhs_sign_bit != 0 && result_sign_bit != 0)
 		|| (operand0_sign_bit != 0 && rhs_sign_bit == 0 && result_sign_bit == 0)) {
 		cout << "OverFlow in subtraction: operands are " << (*this) << " and " << rhs << endl;
-		FILE *fd = fopen("errolog.txt", "w");
-		fprintf(fd, "OverFlow in subtraction: operands are %llu and %llu", (*this), rhs);
-		fclose(fd);
 		exit(1);
 	}
 
@@ -420,9 +332,6 @@ FixedPoint& FixedPoint::operator*=(FixedPoint &rhs) {
 		// use result_tmp to check for overflow	
 		if (result_tmp / this->GetValue() != rhs.GetValue()) {
 			cout << "OverFlow in Multiplication: operands are " << (*this) << " and " << rhs << endl;
-			FILE *fd = fopen("errolog.txt", "w");
-			fprintf(fd, "OverFlow in Multiplication: operands are %llu and %llu", (*this), rhs);
-			fclose(fd);
 			exit(1);
 		}
 	}
@@ -434,29 +343,6 @@ FixedPoint& FixedPoint::operator*=(FixedPoint &rhs) {
 FixedPoint& FixedPoint::operator/=(FixedPoint &rhs) {
 	int64_t result = this->m_value / rhs.m_value;
 	int64_t result_tmp = result;
-
-	// mask to get valid part of result_tmp
-	uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask >> (MAX_FIXED_POINT_WIDTH - this->m_length);
-	result_tmp = result_tmp & mask;
-
-	// sign extend if necessary for result_tmp
-	mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask << (this->m_length);
-	uint64_t result_sign_bit = (this->GetIntPart(result, this->m_length, this->m_numFracBits)) >> (this->m_length - this->m_numFracBits - 1);
-	if (result_sign_bit != 0){
-		result_tmp = result_tmp | mask;
-	}
-
-	// use result_tmp to check for overflow
-	if (result_tmp * this->GetValue() != rhs.GetValue()) {
-		cout << "OverFlow in Division: operands are " << (*this) << " and " << rhs << endl;
-		FILE *fd = fopen("errolog.txt", "w");
-		fprintf(fd, "OverFlow in Division: operands are %llu and %llu", (*this), rhs);
-		fclose(fd);
-		exit(1);
-	}
-
 	return *this;   
 }
 
