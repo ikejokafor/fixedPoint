@@ -26,13 +26,14 @@
 #   
 #####################################################################################################################################################
 
+
 # BEGIN CMAKE Version (Required Line) ---------------------------------------------------------------------------------------------------------------
 cmake_minimum_required (VERSION 3.5.1)
 # END CMAKE Version ---------------------------------------------------------------------------------------------------------------------------------
 
 
 # BEGIN Target Name ---------------------------------------------------------------------------------------------------------------------------------
-SET(TARGET_NAME fixedPoint)
+SET(TARGET_NAME fixedPointTester)
 # END Target Name -----------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -42,7 +43,7 @@ PROJECT(${TARGET_NAME})
 
 
 # BEGIN Set VS startup Project (Affects Windows only) -----------------------------------------------------------------------------------------------
-#SET_PROPERTY(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_NAME})
+SET_PROPERTY(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${TARGET_NAME})
 # END Set VS startup Project ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -66,9 +67,11 @@ PROJECT(${TARGET_NAME})
 #add_definitions(-DLINUX)
 # END Compiler Definitions --------------------------------------------------------------------------------------------------------------------------
 
+
 # BEGIN External CMake files ------------------------------------------------------------------------------------------------------------------------
-# Make sure include and lib directories are relative to home dir of this cmake file
-ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/example)
+#ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}<path_to_cmakefile>)
+# for cmakelists not a subdirectory of this cmakelists, use this below command
+#ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}<path_to_cmakefile> [<directory-to-put-built-binary>])
 # END External CMake files --------------------------------------------------------------------------------------------------------------------------
 
 
@@ -93,20 +96,19 @@ FILE(GLOB TARGET_HEADERS
 # BEGIN Library Settings ----------------------------------------------------------------------------------------------------------------------------
 # For Visual studio this call must be before ADD_EXECUTABLE
 link_directories(
-    #<path_to_lib0>
-    #<path_to_lib1>
-    #<path_to_libN>
+    ${PROJECT_SOURCE_DIR}/../build/Debug/
 )
 # END Library Settings ------------------------------------------------------------------------------------------------------------------------------
 
 
 # BEGIN Target Settings -----------------------------------------------------------------------------------------------------------------------------
-ADD_LIBRARY(${TARGET_NAME} STATIC ${TARGET_SRCS} ${TARGET_HEADERS})
+ADD_EXECUTABLE(${TARGET_NAME} ${TARGET_SRCS} ${TARGET_HEADERS})
 # END Target Settings -------------------------------------------------------------------------------------------------------------------------------
 
 
 # BEGIN Build dependencies --------------------------------------------------------------------------------------------------------------------------
-#add_dependencies(${TARGET_NAME} [<target-dependency>]...)
+# ${TARGET_NAME} depends on [<target-dependency>]
+add_dependencies(${TARGET_NAME} fixedPoint)
 # END Build dependencies ----------------------------------------------------------------------------------------------------------------------------
 
 
@@ -114,8 +116,8 @@ ADD_LIBRARY(${TARGET_NAME} STATIC ${TARGET_SRCS} ${TARGET_HEADERS})
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug)
 endif()
-    set(CMAKLE_CXX_FLAGS_DEBUG "-g")
-    set(CMAKLE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKLE_CXX_FLAGS_DEBUG "-g")
+set(CMAKLE_CXX_FLAGS_RELEASE "-O3")
 # END Debug / Release Settings ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -130,10 +132,12 @@ TARGET_COMPILE_OPTIONS(${TARGET_NAME} PUBLIC
 
 # BEGIN Include directories -------------------------------------------------------------------------------------------------------------------------
 TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} PUBLIC
-    ${PROJECT_SOURCE_DIR}/inc/
-    #<include_path0>
-    #<include_path1>
-    #<include_pathN>
+    /usr/local/include/
+    /usr/include/
+    ${PROJECT_SOURCE_DIR}/../inc/
+#    <include_path0>
+#    <include_path1>
+#    <include_pathN>
 )
 # END Include directories ---------------------------------------------------------------------------------------------------------------------------
 
@@ -143,23 +147,19 @@ TARGET_INCLUDE_DIRECTORIES(${TARGET_NAME} PUBLIC
 #   For shared libraries make sure.....
 #       WINDOWS: PATH env variable includes path(s) to dll's
 #       LINUX:  LD_LIBRARY_PATH env variablel includes path(s) to so's
-#if(WIN32)
-#TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
-#    <lib0_name>.lib
-#    <lib1_name>.lib
-#    <libN_name>.lib
-#)
-#else()
-#TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
-#    -L<path_to_lib0>
-#    -L<path_to_lib1>
-#    -L<path_to_libN>
-#    <lib0_name>
-#    <lib1_name>
-#    <libN_name>
-#)
-#endif()
+#
+#   If lib0 depends on lib1, put list lib0 before lib1
+#
+if(WIN32)
+TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
+   fixedPoint.lib
+)
+else()
+TARGET_LINK_LIBRARIES(${TARGET_NAME} PUBLIC
+    -L/usr/local/lib/
+    -L/usr/lib/
+    -L${PROJECT_SOURCE_DIR}/../build/debug/
+    -lfixedPoint
+)
+endif()
 # END Library Settings ------------------------------------------------------------------------------------------------------------------------------
-
-
-
