@@ -52,8 +52,8 @@ class FixedPoint {
 		int32_t GetValue();
 		void SetParam(int length, int numFracBits);
 		float toFloat();
-		static float toFloat(int32_t value, int length, int numFracBits);
-		static FixedPoint mult(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits);
+		static float toFloat(int numFracBits, int32_t value);
+		static FixedPoint mult(int length, int numFracBits, FixedPoint operand0, FixedPoint operand1);
 		friend FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator-(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator*(FixedPoint &operand0, FixedPoint &operand1);

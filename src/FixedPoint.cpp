@@ -5,7 +5,7 @@ using namespace std;
 FixedPoint::FixedPoint() {
 	m_length = MAX_FIXED_POINT_WIDTH;
 	m_numFracBits = DEFAULT_FRAC_WIDTH;
-	m_value = (int32_t)0;
+	m_value = 0;
 }
 
 
@@ -33,14 +33,14 @@ FixedPoint::FixedPoint(int32_t value) {
 FixedPoint::FixedPoint(float value) {
 	m_length = MAX_FIXED_POINT_WIDTH;
 	m_numFracBits = DEFAULT_FRAC_WIDTH;
-	m_value = (int32_t)ceil((float)(value * pow((float)2, m_numFracBits)));
+	m_value = (int32_t)ceil(float((value * pow(float(2), m_numFracBits))));
 }
 
 
 FixedPoint::FixedPoint(int length, int numFracBits) {
 	m_length = length; 
 	m_numFracBits = numFracBits;
-	m_value = (int32_t)0;
+	m_value = 0;
 }
 
 
@@ -69,7 +69,7 @@ FixedPoint::FixedPoint(int length, int numFracBits, float value) {
 	m_length = length;
 	m_numFracBits = numFracBits;
 	// convert to fixed point
-	m_value = (int32_t)ceil((float)(value * pow((float)2, numFracBits)));
+	m_value = (int32_t)ceil(float((value * pow(float(2), numFracBits))));
 }
 
 
@@ -81,28 +81,28 @@ FixedPoint::~FixedPoint() {
 uint32_t FixedPoint::GetFracPart() {
 	uint32_t mask = 0xFFFFFFFF;
 	mask = mask >> (MAX_FIXED_POINT_WIDTH - m_numFracBits);
-	return (uint32_t)m_value & mask;
+	return (uint32_t(m_value) & mask);
 }
 
 
 uint32_t FixedPoint::GetFracPart(int numFracBits, int32_t value) {
 	uint32_t mask = 0xFFFFFFFF;
 	mask = mask >> (MAX_FIXED_POINT_WIDTH - numFracBits);
-	return ((uint32_t)value & mask);
+	return (uint32_t(value) & mask);
 }
 
 
 uint32_t FixedPoint::GetIntPart() {
 	uint32_t mask = 0xFFFFFFFF;
 	mask = mask >> (MAX_FIXED_POINT_WIDTH - m_length);
-	return (((uint32_t)m_value & mask) >> m_numFracBits);
+	return ((uint32_t(m_value & mask)) >> m_numFracBits);
 }
 
 
 uint32_t FixedPoint::GetIntPart(int length, int numFracBits, int32_t value) {
 	uint32_t mask = 0xFFFFFFFF;
 	mask = mask >> (MAX_FIXED_POINT_WIDTH - length);
-	return (((uint32_t)value & mask) >> numFracBits);
+	return ((uint32_t(value & mask)) >> numFracBits);
 }
 
 
@@ -143,86 +143,14 @@ void FixedPoint::SetParam(int length, int numFracBits) {
 
 
 float FixedPoint::toFloat() {
-	int32_t value = GetValue();
-	uint32_t signBit = 0;
-	uint32_t _value = value;
-
-	uint32_t intPart = GetIntPart(value, m_length, m_numFracBits);
-	uint32_t fracPart = GetFracPart(value, m_numFracBits);
-	// get the two's compliment if necessary
-	if ((intPart >> (m_length - m_numFracBits - 1)) != 0) {
-		signBit = 0x80000000;
-		_value = (~_value) + (uint32_t)1;
-		intPart = GetIntPart(m_length, m_numFracBits, _value);
-		fracPart = GetFracPart(_value, m_numFracBits);
-	}
-
-	float intToFloat = (float)intPart;
-
-	// get fractional component
-	int power = -1;
-	float fracToFloat = 0;
-	uint32_t mask = 0x000000001;
-	mask = mask << (m_numFracBits - 1);
-	for (int i = 0; i < m_numFracBits; i++, power--, mask = mask >> 1){
-		uint32_t bit = mask & fracPart;
-		if (bit != 0){
-			fracToFloat += ((float)pow((float)2, power));
-		}
-	}
-
-	float fixedToFloat = intToFloat + fracToFloat;
-
-	// put sign bit after adding integer and fractional parts
-	uint32_t temp;
-	uint8_t *temp_ptr = reinterpret_cast<uint8_t*>(&temp);
-	uint8_t *fixedToFloat_ptr = reinterpret_cast<uint8_t*>(&fixedToFloat);
-	temp_ptr[0] = fixedToFloat_ptr[0]; temp_ptr[1] = fixedToFloat_ptr[1]; temp_ptr[2] = fixedToFloat_ptr[2]; temp_ptr[3] = fixedToFloat_ptr[3];
-	temp = temp | (uint32_t)signBit;
-	fixedToFloat_ptr[0] = temp_ptr[0]; fixedToFloat_ptr[1] = temp_ptr[1]; fixedToFloat_ptr[2] = temp_ptr[2]; fixedToFloat_ptr[3] = temp_ptr[3];
-	return fixedToFloat;
+	return float(GetValue()) * pow(float(2), float(-m_numFracBits));
 }
 
-float FixedPoint::toFloat(int32_t value, int length, int numFracBits) {
-	uint32_t signBit = 0;
-	uint32_t _value = value;
-
-	uint32_t intPart = GetIntPart(value, length, numFracBits);
-	uint32_t fracPart = GetFracPart(value, numFracBits);
-	// get the two's compliment if necessary
-	if ((intPart >> (length - numFracBits - 1)) != 0) {
-		signBit = 0x80000000;
-		_value = (~_value) + (uint32_t)1;
-		intPart = GetIntPart(_value, length, numFracBits);
-		fracPart = GetFracPart(_value, numFracBits);
-	}
-
-	float intToFloat = (float)intPart;
-
-	// get fractional component
-	int power = -1;
-	float fracToFloat = 0;
-	uint32_t mask = 0x000000001;
-	mask = mask << (numFracBits - 1);
-	for (int i = 0; i < numFracBits; i++, power--, mask = mask >> 1){
-		uint32_t bit = mask & fracPart;
-		if (bit != 0){
-			fracToFloat += ((float)pow((float)2, power));
-		}
-	}
-	float fixedToFloat = intToFloat + fracToFloat;
-
-	// put sign bit after adding integer and fractional parts
-	uint32_t temp;
-	uint8_t *temp_ptr = reinterpret_cast<uint8_t*>(&temp);
-	uint8_t *fixedToFloat_ptr = reinterpret_cast<uint8_t*>(&fixedToFloat);
-	temp_ptr[0] = fixedToFloat_ptr[0]; temp_ptr[1] = fixedToFloat_ptr[1]; temp_ptr[2] = fixedToFloat_ptr[2]; temp_ptr[3] = fixedToFloat_ptr[3];
-	temp = temp | (uint32_t)signBit;
-	fixedToFloat_ptr[0] = temp_ptr[0]; fixedToFloat_ptr[1] = temp_ptr[1]; fixedToFloat_ptr[2] = temp_ptr[2]; fixedToFloat_ptr[3] = temp_ptr[3];
-	return fixedToFloat;
+float FixedPoint::toFloat(int numFracBits, int32_t value) {
+	return float(value) * pow(float(2), float(-numFracBits));;
 }
 
-FixedPoint FixedPoint::mult(FixedPoint operand0, FixedPoint operand1, int length, int numFracBits) {
+FixedPoint FixedPoint::mult(int length, int numFracBits, FixedPoint operand0, FixedPoint operand1) {
 	int32_t result = operand0.m_value * operand1.m_value;
     result = result >> ((operand0.m_numFracBits + operand1.m_numFracBits) - numFracBits);
 	return FixedPoint(length, numFracBits, result);
