@@ -254,15 +254,13 @@ FixedPoint& FixedPoint::operator-=(FixedPoint &rhs) {
 
 
 FixedPoint& FixedPoint::operator*=(FixedPoint &rhs) {
-	int32_t result = this->m_value * rhs.m_value;
-	int32_t result_tmp = result;	
+	this->m_value *= this->m_value * rhs.m_value;
 	return *this;   
 }
 
 
 FixedPoint& FixedPoint::operator/=(FixedPoint &rhs) {
-	int32_t result = this->m_value / rhs.m_value;
-	int32_t result_tmp = result;
+	this->m_value *= this->m_value / rhs.m_value;
 	return *this;   
 }
 
