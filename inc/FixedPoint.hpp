@@ -1,8 +1,8 @@
 #ifndef __FIXED_POINT_HPP__
 #define __FIXED_POINT_HPP__
 
-#define MAX_FIXED_POINT_WIDTH	32
-#define DEFAULT_FRAC_WIDTH		16
+#define MAX_FIXED_POINT_WIDTH	64
+#define DEFAULT_FRAC_WIDTH		32
 
 #include <stdint.h>
 #include <iostream>
@@ -39,21 +39,20 @@ class FixedPoint {
 
 	public:
 		FixedPoint();	
-		FixedPoint(int32_t value);
+		FixedPoint(int64_t value);
 		FixedPoint(float value);
 		FixedPoint(int length, int numFracBits);					
-		FixedPoint(int length, int numFracBits, int32_t value);		// function is assuming just a regular number not a fixed point number
+		FixedPoint(int length, int numFracBits, int64_t value, bool normalize);
 		FixedPoint(int length, int numFracBits, float value);
 		~FixedPoint();
-		uint32_t GetFracPart();
-		static uint32_t GetFracPart(int numFracBits, int32_t value);
-		uint32_t GetIntPart();
-		static uint32_t GetIntPart(int length, int numFracBits, int32_t value);
-		int32_t GetValue();
+		uint64_t GetFracPart();
+		static uint64_t GetFracPart(int numFracBits, int64_t value);
+		uint64_t GetIntPart();
+		static uint64_t GetIntPart(int length, int numFracBits, int64_t value);
+		int64_t GetValue();
 		void SetParam(int length, int numFracBits);
 		float toFloat();
-		static float toFloat(int numFracBits, int32_t value);
-		static FixedPoint mult(int length, int numFracBits, FixedPoint operand0, FixedPoint operand1);
+		static float toFloat(int numFracBits, int64_t value);
 		friend FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator-(FixedPoint &operand0, FixedPoint &operand1);
 		friend FixedPoint operator*(FixedPoint &operand0, FixedPoint &operand1);
@@ -71,7 +70,7 @@ class FixedPoint {
 		friend bool operator!=(const FixedPoint &operand0, const FixedPoint &operand1);
 		friend std::ostream& operator<<(std::ostream& o, FixedPoint value);
 
-		int32_t		m_value;    // need to use signed number for two's complement arithmetic
+		int64_t		m_value;    // need to use signed number for two's complement arithmetic
 		int			m_numFracBits;
 		int			m_length;
 
