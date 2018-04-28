@@ -77,6 +77,11 @@ FixedPoint::FixedPoint(int length, int numFracBits, float value) {
 }
 
 
+FixedPoint_t FixedPoint::create(int numFracBits, float value) {
+	// convert to fixed point
+	return (int64_t)ceil(float((value * pow(float(2), float(numFracBits)))));	// no sign extension needed
+}
+
 FixedPoint::~FixedPoint() {
 
 }
@@ -115,6 +120,38 @@ int64_t FixedPoint::GetValue() {
 }
 
 
+void FixedPoint::SetParam(int oldLength, int oldNumFracBits, int newLength, int newNumFracBits, FixedPoint_t *num_arry, int arryLength) {
+	for (int i = 0; i < arryLength; i++) {
+		uint64_t fracPart = GetFracPart(newNumFracBits, num_arry[i]);
+		uint64_t intPart = GetIntPart(newLength, newNumFracBits, num_arry[i]);
+		// Get sign of number
+		uint64_t negative = (intPart >> (oldLength - oldNumFracBits - 1));
+		int currentNumIntBits = (oldLength - oldNumFracBits);
+		int newNumIntBits = newLength - newNumFracBits;
+
+		if (oldNumFracBits > newNumFracBits) {
+			fracPart = fracPart >> (oldNumFracBits - newNumFracBits);
+		} else if (oldNumFracBits < newNumFracBits) {
+			fracPart = fracPart << (newNumFracBits - oldNumFracBits);
+		}
+
+
+		if (!negative && newNumIntBits < currentNumIntBits) {
+			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+			mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
+			intPart = intPart & mask;
+		} else if (negative && newNumIntBits < currentNumIntBits) {
+			// sign extend
+			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+			mask = mask << (newNumIntBits);
+			intPart = intPart | mask;
+		}
+
+		num_arry[i] = ((intPart << newNumFracBits) | fracPart);
+	}
+}
+
+
 void FixedPoint::SetParam(int length, int numFracBits) {
 	uint64_t fracPart = GetFracPart();
 	uint64_t intPart = GetIntPart();
@@ -125,16 +162,18 @@ void FixedPoint::SetParam(int length, int numFracBits) {
 
 	if (m_numFracBits > numFracBits) {
 		fracPart = fracPart >> (m_numFracBits - numFracBits);
-	} else if (m_numFracBits < numFracBits) {
+	}
+	else if (m_numFracBits < numFracBits) {
 		fracPart = fracPart << (numFracBits - m_numFracBits);
-	} 
+	}
 
 
 	if (!negative && newNumIntBits < currentNumIntBits) {
 		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
 		mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
 		intPart = intPart & mask;
-	} else if (negative && newNumIntBits < currentNumIntBits) {
+	}
+	else if (negative && newNumIntBits < currentNumIntBits) {
 		// sign extend
 		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
 		mask = mask << (newNumIntBits);
@@ -159,13 +198,14 @@ float FixedPoint::toFloat(int numFracBits, int64_t value) {
 
 
 FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING
 	if (operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
 		cout << "[ERROR]: Arithmetic of two different parameters" << endl;
 		exit(1);
 	}
-
-	int64_t result = operand0.m_value + operand1.m_value;
-
+#endif
+    int64_t result = operand0.m_value + operand1.m_value;
+#ifdef NUMERIC_CHECKING
 	uint64_t result_sign_bit = (FixedPoint::GetIntPart(operand0.m_length, operand0.m_numFracBits, result)) >> (operand0.m_length - operand0.m_numFracBits - 1);
 	uint64_t operand0_sign_bit = (operand0.GetIntPart()) >> (operand0.m_length - operand0.m_numFracBits - 1);
 	uint64_t operand1_sign_bit = (operand1.GetIntPart()) >> (operand1.m_length - operand1.m_numFracBits - 1);
@@ -174,19 +214,20 @@ FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1) {
 		cout << "OverFlow in Addition: operands are " << operand0 << " and " << operand1 << endl;
 		exit(1);
 	}
-
+#endif
 	return FixedPoint(operand0.m_length, operand0.m_numFracBits, result, false);
 }
 
 
 FixedPoint operator-(FixedPoint &operand0, FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING
 	if (operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
 		cout << "[ERROR]: Arithmetic of two different parameters" << endl;
 		exit(1);
 	}
-
-	int64_t result = operand0.m_value - operand1.m_value;
-
+#endif
+	int64_t result = operand0.m_value - operand1.m_value;   
+#ifdef NUMERIC_CHECKING
 	uint64_t result_sign_bit = (FixedPoint::GetIntPart(operand0.m_length, operand0.m_numFracBits, result)) >> (operand0.m_length - operand0.m_numFracBits - 1);
 	uint64_t operand0_sign_bit = (operand0.GetIntPart()) >> (operand0.m_length - operand0.m_numFracBits - 1);
 	uint64_t operand1_sign_bit = (operand1.GetIntPart()) >> (operand1.m_length - operand1.m_numFracBits - 1);
@@ -195,7 +236,7 @@ FixedPoint operator-(FixedPoint &operand0, FixedPoint &operand1) {
 		cout << "OverFlow in subtraction: operands are " << operand0 << " and " << operand1 << endl;
 		exit(1);
 	}
-
+#endif
 	return FixedPoint(operand0.m_length, operand0.m_numFracBits, result, false);
 }
 
@@ -213,13 +254,14 @@ FixedPoint operator/(FixedPoint &operand0, FixedPoint &operand1) {
 
 
 FixedPoint& FixedPoint::operator+=(FixedPoint &rhs) {
+#ifdef NUMERIC_CHECKING   
 	if (this->m_length != rhs.m_length || this->m_numFracBits != rhs.m_numFracBits) {
 		cout << "[ERROR]: Arithmetic of two different parameters" << endl;
 		exit(1);
 	}
-
+#endif
 	this->m_value = this->m_value + rhs.m_value;
-
+#ifdef NUMERIC_CHECKING    
 	uint64_t result_sign_bit = (FixedPoint::GetIntPart(this->m_length, this->m_numFracBits, this->m_value)) >> (this->m_length - this->m_numFracBits - 1);
 	uint64_t operand0_sign_bit = (this->GetIntPart()) >> (this->m_length - this->m_numFracBits - 1);
 	uint64_t rhs_sign_bit = (rhs.GetIntPart()) >> (rhs.m_length - rhs.m_numFracBits - 1);
@@ -228,19 +270,20 @@ FixedPoint& FixedPoint::operator+=(FixedPoint &rhs) {
 		cout << "OverFlow in Addition: operands are " << (*this) << " and " << rhs << endl;
 		exit(1);
 	}
-
+#endif
 	return *this;
 }
 
 
 FixedPoint& FixedPoint::operator-=(FixedPoint &rhs) {
+#ifdef NUMERIC_CHECKING
 	if (this->m_length != rhs.m_length || this->m_numFracBits != rhs.m_numFracBits) {
 		cout << "[ERROR]: Arithmetic of two different parameters" << endl;
 		exit(1);
 	}
-
+#endif
 	this->m_value = this->m_value - rhs.m_value;
-
+#ifdef NUMERIC_CHECKING    
 	uint64_t result_sign_bit = (this->GetIntPart(this->m_length, this->m_numFracBits, this->m_value)) >> (this->m_length - this->m_numFracBits - 1);
 	uint64_t operand0_sign_bit = (this->GetIntPart()) >> (this->m_length - this->m_numFracBits - 1);
 	uint64_t rhs_sign_bit = (rhs.GetIntPart()) >> (rhs.m_length - rhs.m_numFracBits - 1);
@@ -249,7 +292,7 @@ FixedPoint& FixedPoint::operator-=(FixedPoint &rhs) {
 		cout << "OverFlow in subtraction: operands are " << (*this) << " and " << rhs << endl;
 		exit(1);
 	}
-
+#endif
 	return *this;
 }
 
@@ -267,10 +310,13 @@ FixedPoint& FixedPoint::operator/=(FixedPoint &rhs) {
 
 
 FixedPoint& FixedPoint::operator=(const FixedPoint &obj) {
+#ifdef NUMERIC_CHECKING    
     if(m_length != obj.m_length || m_numFracBits != obj.m_numFracBits) {
         cout << "[ERROR]: assignment of two different parameters" << endl;
+        raise(4);
         exit(1);
     }
+#endif   
 	m_value = obj.m_value;
 	m_length = obj.m_length;
 	m_numFracBits = obj.m_numFracBits;
@@ -279,61 +325,67 @@ FixedPoint& FixedPoint::operator=(const FixedPoint &obj) {
 
 
 bool operator<(const FixedPoint &operand0, const FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING    
     if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
         cout << "[ERROR]: comparison of two different parameters" << endl;
         exit(1);
     }
-
+#endif
 	return (operand0.m_value < operand1.m_value);
 }
 
 
 bool operator<=(const FixedPoint &operand0, const FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING  
     if(operand0.m_length != operand0.m_length || operand1.m_numFracBits !=  operand1.m_numFracBits) {
         cout << "[ERROR]: comparison of two different parameters" << endl;
         exit(1);
     }
-
+#endif
 	return (operand0.m_value <= operand1.m_value);
 }
 
 
 bool operator>(const FixedPoint &operand0, const FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING
     if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
         cout << "[ERROR]: comparison of two different parameters" << endl;
         exit(1);
     }
-
+#endif
 	return (operand0.m_value > operand1.m_value);
 }
 
 
 bool operator>=(const FixedPoint &operand0, const FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING    
     if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
         cout << "[ERROR]: comparison of two different parameters" << endl;
         exit(1);
     }
-
+#endif
 	return (operand0.m_value >= operand1.m_value);
 }
 
 
 bool operator==(const FixedPoint &operand0, const FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING 
     if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
         cout << "[ERROR]: comparison of two different parameters" << endl;
         exit(1);
     }
-
+#endif
 	return (operand0.m_value == operand1.m_value);
 }
 
 
 bool operator!=(const FixedPoint &operand0, const FixedPoint &operand1) {
+#ifdef NUMERIC_CHECKING     
     if(operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
         cout << "[ERROR]: comparison of two different parameters" << endl;
         exit(1);
     }
-
+#endif
 	return (operand0.m_value != operand1.m_value);
 }
 

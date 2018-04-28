@@ -3,10 +3,14 @@
 
 #define MAX_FIXED_POINT_WIDTH	64
 #define DEFAULT_FRAC_WIDTH		32
+#undef NUMERIC_CHECKING
 
 #include <stdint.h>
 #include <iostream>
+#include <limits.h>
+#include <cstdint> 
 #include <math.h>
+#include <signal.h>
 
 #ifndef NDEBUG
 #define ASSERT(condition, message) \
@@ -35,6 +39,8 @@
 //      For mult() or div() ensure that the length, and numFracbits passed in is less than or equal to the products length or numFracBits
 //
 
+typedef int64_t FixedPoint_t;
+
 class FixedPoint {
 
 	public:
@@ -44,6 +50,7 @@ class FixedPoint {
 		FixedPoint(int length, int numFracBits);					
 		FixedPoint(int length, int numFracBits, int64_t value, bool normalize);
 		FixedPoint(int length, int numFracBits, float value);
+		static FixedPoint_t create(int numFracBits, float value);
 		~FixedPoint();
 		uint64_t GetFracPart();
 		static uint64_t GetFracPart(int numFracBits, int64_t value);
@@ -51,6 +58,7 @@ class FixedPoint {
 		static uint64_t GetIntPart(int length, int numFracBits, int64_t value);
 		int64_t GetValue();
 		void SetParam(int length, int numFracBits);
+		static void SetParam(int oldLength, int oldNumFracBits, int newLength, int newNumFracBits, FixedPoint_t *num_arry, int arryLength);
 		float toFloat();
 		static float toFloat(int numFracBits, int64_t value);
 		friend FixedPoint operator+(FixedPoint &operand0, FixedPoint &operand1);
@@ -61,7 +69,7 @@ class FixedPoint {
         FixedPoint& operator-=(FixedPoint &rhs);
         FixedPoint& operator*=(FixedPoint &rhs);
         FixedPoint& operator/=(FixedPoint &rhs);
-		FixedPoint &operator=(const FixedPoint &obj);
+		FixedPoint& operator=(const FixedPoint &obj);
 		friend bool operator<(const FixedPoint &operand0, const FixedPoint &operand1);
 		friend bool operator<=(const FixedPoint &operand0, const FixedPoint &operand1);
 		friend bool operator>(const FixedPoint &operand0, const FixedPoint &operand1);

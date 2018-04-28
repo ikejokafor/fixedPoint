@@ -112,10 +112,10 @@ ADD_LIBRARY(${TARGET_NAME} STATIC ${TARGET_SRCS} ${TARGET_HEADERS})
 
 # BEGIN Debug / Release Settings --------------------------------------------------------------------------------------------------------------------
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Release)
 endif()
-    set(CMAKLE_CXX_FLAGS_DEBUG "-g")
-    set(CMAKLE_CXX_FLAGS_RELEASE "-O3")
+set(CMAKLE_CXX_FLAGS_DEBUG "-g")
+set(CMAKLE_CXX_FLAGS_RELEASE "-O3")
 # END Debug / Release Settings ----------------------------------------------------------------------------------------------------------------------
 
 

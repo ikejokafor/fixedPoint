@@ -1,12 +1,17 @@
 #include "FixedPoint.hpp"
-using namespace std;
 #include <iostream>
 
-int main(int argc, char **argv){
+using namespace std;
 
-	int64_t a = LONG_MAX;
-	int64_t b = FIXED_POINT_MIN;
-	FixedPoint fxPtMin(32, 16, 0x80000001, false);
+
+int main(int argc, char **argv) {
+
+	uint32_t a = 0x88888888;
+
+	int b = a;
+
+
+
 
     return 0;
 }
