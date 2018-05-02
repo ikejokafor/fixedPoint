@@ -155,68 +155,71 @@ void FixedPoint::SetParam(int oldLength, int oldNumFracBits, int newLength, int 
 
 
 void FixedPoint::SetParam(int oldLength, int oldNumFracBits, int newLength, int newNumFracBits, FixedPoint_t &num) {
+    if (oldLength != newLength) {
+        uint64_t fracPart = GetFracPart(oldNumFracBits, num);
+        uint64_t intPart = GetIntPart(oldLength, oldNumFracBits, num);
+        // Get sign of number
+        uint64_t negative = (intPart >> (oldLength - oldNumFracBits - 1));
+        int currentNumIntBits = (oldLength - oldNumFracBits);
+        int newNumIntBits = newLength - newNumFracBits;
 
-    uint64_t fracPart = GetFracPart(oldNumFracBits, num);
-    uint64_t intPart = GetIntPart(oldLength, oldNumFracBits, num);
-    // Get sign of number
-    uint64_t negative = (intPart >> (oldLength - oldNumFracBits - 1));
-    int currentNumIntBits = (oldLength - oldNumFracBits);
-    int newNumIntBits = newLength - newNumFracBits;
+        if (oldNumFracBits > newNumFracBits) {
+            fracPart = fracPart >> (oldNumFracBits - newNumFracBits);
+        } else if (oldNumFracBits < newNumFracBits) {
+            fracPart = fracPart << (newNumFracBits - oldNumFracBits);
+        }
 
-    if (oldNumFracBits > newNumFracBits) {
-        fracPart = fracPart >> (oldNumFracBits - newNumFracBits);
-    } else if (oldNumFracBits < newNumFracBits) {
-        fracPart = fracPart << (newNumFracBits - oldNumFracBits);
+
+        if (!negative && newNumIntBits < currentNumIntBits) {
+            uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+            mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
+            intPart = intPart & mask;
+        } else if (negative && newNumIntBits < currentNumIntBits) {
+            // sign extend
+            uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+            mask = mask << (newNumIntBits);
+            intPart = intPart | mask;
+        }
+
+        num = ((intPart << newNumFracBits) | fracPart);
     }
-
-
-    if (!negative && newNumIntBits < currentNumIntBits) {
-        uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-        mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
-        intPart = intPart & mask;
-    } else if (negative && newNumIntBits < currentNumIntBits) {
-        // sign extend
-        uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-        mask = mask << (newNumIntBits);
-        intPart = intPart | mask;
-    }
-
-    num = ((intPart << newNumFracBits) | fracPart);
 }
 
 
 void FixedPoint::SetParam(int length, int numFracBits) {
-	uint64_t fracPart = GetFracPart();
-	uint64_t intPart = GetIntPart();
-	// Get sign of number
-	uint64_t negative = (intPart >> (m_length - m_numFracBits - 1));
-	int currentNumIntBits = (m_length - m_numFracBits);
-	int newNumIntBits = length - numFracBits;
+    if (m_length != length) {
+        uint64_t fracPart = GetFracPart();
+        uint64_t intPart = GetIntPart();
+        // Get sign of number
+        uint64_t negative = (intPart >> (m_length - m_numFracBits - 1));
+        int currentNumIntBits = (m_length - m_numFracBits);
+        int newNumIntBits = length - numFracBits;
 
-	if (m_numFracBits > numFracBits) {
-		fracPart = fracPart >> (m_numFracBits - numFracBits);
-	}
-	else if (m_numFracBits < numFracBits) {
-		fracPart = fracPart << (numFracBits - m_numFracBits);
-	}
+        if (m_numFracBits > numFracBits) {
+            fracPart = fracPart >> (m_numFracBits - numFracBits);
+        }
+        else if (m_numFracBits < numFracBits) {
+            fracPart = fracPart << (numFracBits - m_numFracBits);
+        }
 
 
-	if (!negative && newNumIntBits < currentNumIntBits) {
-		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-		mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
-		intPart = intPart & mask;
-	}
-	else if (negative && newNumIntBits < currentNumIntBits) {
-		// sign extend
-		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-		mask = mask << (newNumIntBits);
-		intPart = intPart | mask;
-	}
+        if (!negative && newNumIntBits < currentNumIntBits) {
+            uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+            mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
+            intPart = intPart & mask;
+        }
+        else if (negative && newNumIntBits < currentNumIntBits) {
+            // sign extend
+            uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+            mask = mask << (newNumIntBits);
+            intPart = intPart | mask;
+        }
 
-	m_numFracBits = numFracBits;
-	m_length = length;
+        m_numFracBits = numFracBits;
+        m_length = length;
 
-	m_value = ((intPart << numFracBits) | fracPart);
+        m_value = ((intPart << numFracBits) | fracPart);
+    }
 }
 
 
