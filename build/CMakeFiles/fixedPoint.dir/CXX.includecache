@@ -1,0 +1,26 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/ikenna/SOC_IT/fixedPoint/inc/FixedPoint.hpp
+stdint.h
+-
+iostream
+-
+limits.h
+-
+cstdint
+-
+math.h
+-
+signal.h
+-
+
+/home/ikenna/SOC_IT/fixedPoint/src/FixedPoint.cpp
+FixedPoint.hpp
+/home/ikenna/SOC_IT/fixedPoint/src/FixedPoint.hpp
+
