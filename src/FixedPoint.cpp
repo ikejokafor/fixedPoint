@@ -102,16 +102,12 @@ uint64_t FixedPoint::GetFracPart(int numFracBits, int64_t value) {
 
 
 uint64_t FixedPoint::GetIntPart() {
-	uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask >> (MAX_FIXED_POINT_WIDTH - m_length);
-	return ((uint64_t(m_value & mask)) >> m_numFracBits);
+	return (uint64_t(m_value) >> m_numFracBits);
 }
 
 
 uint64_t FixedPoint::GetIntPart(int length, int numFracBits, int64_t value) {
-	uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask >> (MAX_FIXED_POINT_WIDTH - length);
-	return ((uint64_t(value & mask)) >> numFracBits);
+	return (value >> numFracBits);
 }
 
 
