@@ -102,7 +102,7 @@ uint64_t FixedPoint::GetFracPart(int numFracBits, int64_t value) {
 
 
 uint64_t FixedPoint::GetIntPart() {
-	return (uint64_t(m_value) >> m_numFracBits);
+	return (m_value >> m_numFracBits);
 }
 
 
