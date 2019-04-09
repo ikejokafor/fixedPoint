@@ -1,0 +1,3 @@
++   verify there are no casting issues when using uint64_t in functions:
+    +   fixedPoint::fixedPoint(int64_t value)
+    +   fixedPoint::fixedPoint(int length, int numFracBits, int64_t value, bool normalize)
