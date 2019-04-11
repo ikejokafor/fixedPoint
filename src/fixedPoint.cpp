@@ -3,38 +3,38 @@ using namespace std;
 
 
 fixedPoint::fixedPoint() {
-	m_length = MAX_FIXED_POINT_WIDTH;
-	m_numFracBits = DEFAULT_FRAC_WIDTH;
+	m_length = MAX_FIXED_POINT_LENGTH;
+	m_numFracBits = DEFAULT_NUM_FRAC_BITS;
 	m_value = 0;
 }
 
 
 fixedPoint::fixedPoint(int64_t value) {
-	// verify there are no casting issues when using uint64_t here
-	m_length = MAX_FIXED_POINT_WIDTH;
-	m_numFracBits = DEFAULT_FRAC_WIDTH;
-	int numIntBits = MAX_FIXED_POINT_WIDTH - DEFAULT_FRAC_WIDTH;
+	// verify there are no casting issues when using a uint64_t mask here
+	m_length = MAX_FIXED_POINT_LENGTH;
+	m_numFracBits = DEFAULT_NUM_FRAC_BITS;
+	int numIntBits = MAX_FIXED_POINT_LENGTH - DEFAULT_NUM_FRAC_BITS;
 	if (value < 0) {
 		// take magnitude 
-		uint64_t m_value_mag = ~(uint64_t)value + (uint64_t)1;
+		int64_t m_value_mag = abs(value);
 		// mask and shift
 		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-		mask = mask >> (MAX_FIXED_POINT_WIDTH - numIntBits);
-		m_value_mag = (m_value_mag & mask) << DEFAULT_FRAC_WIDTH;
+		mask = mask >> (MAX_FIXED_POINT_LENGTH - numIntBits);
+		m_value_mag = (m_value_mag & mask) << DEFAULT_NUM_FRAC_BITS;  // assuming no casting issues here
 		// converted to two's complement so no sign extenstion needed
 		m_value = ~m_value_mag + (uint64_t)1;
 	} else {
 		uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-		mask = mask >> (MAX_FIXED_POINT_WIDTH - numIntBits);
-		m_value = (value & mask) << DEFAULT_FRAC_WIDTH;
+		mask = mask >> (MAX_FIXED_POINT_LENGTH - numIntBits);
+		m_value = (value & mask) << DEFAULT_NUM_FRAC_BITS;	// assuming no casting issues here
 	}
 }
 
 
 fixedPoint::fixedPoint(float value) {
-	m_length = MAX_FIXED_POINT_WIDTH;
-	m_numFracBits = DEFAULT_FRAC_WIDTH;
-	m_value = (int64_t)floor(float((value * pow(float(2), m_numFracBits))));
+	m_length = MAX_FIXED_POINT_LENGTH;
+	m_numFracBits = DEFAULT_NUM_FRAC_BITS;
+	m_value = (int64_t)floorf(float((value * pow(float(2), m_numFracBits))));
 }
 
 
@@ -46,26 +46,26 @@ fixedPoint::fixedPoint(int length, int numFracBits) {
 
 
 fixedPoint::fixedPoint(int length, int numFracBits, int64_t value, bool normalize) {
-	// verify there are no casting issues when using uint64_t here
+	// verify there are no casting issues when using a uint64_t mask here
 	m_length = length;
 	m_numFracBits = numFracBits;
 	int numIntBits = length - numFracBits;
-	if(normalize) {
+	if(normalize) {	// if using as constructor for new variable
 		if (value < 0) {
 			// take magnitude 
-			uint64_t m_value_mag = ~(uint64_t)value + (uint64_t)1;
+			int64_t m_value_mag = abs(value);
 			// mask and shift
 			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-			mask = mask >> (MAX_FIXED_POINT_WIDTH - numIntBits);
+			mask = mask >> (MAX_FIXED_POINT_LENGTH - numIntBits);
 			m_value_mag = (m_value_mag & mask) << numFracBits;
 			// converted to two's complement so no sign extenstion needed
 			m_value = ~m_value_mag + (uint64_t)1;
 		} else {
 			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
-			mask = mask >> (MAX_FIXED_POINT_WIDTH - numIntBits);
+			mask = mask >> (MAX_FIXED_POINT_LENGTH - numIntBits);
 			m_value = (value & mask) << numFracBits;
 		}
-	} else {
+	} else {	// if reg arithm no need to noramlize
 		m_value = value;
 	}
 }
@@ -76,12 +76,15 @@ fixedPoint::fixedPoint(int length, int numFracBits, float value) {
 	m_numFracBits = numFracBits;
 	// convert to fixed point
 	m_value = (int64_t)floorf(float((value * pow(float(2), float(numFracBits)))));	// no sign extension needed
+	SetParam(MAX_FIXED_POINT_LENGTH, numFracBits, length, numFracBits, m_value);
 }
 
 
-fixedPoint_t fixedPoint::create(int numFracBits, float value) {
+fixedPoint_t fixedPoint::create(int length, int numFracBits, float value) {
 	// convert to fixed point
-	return (int64_t)floorf(float((value * powf(float(2), float(numFracBits)))));	// no sign extension needed
+	fixedPoint_t fxValue = (fixedPoint_t)floorf(float((value * powf(float(2), float(numFracBits)))));	// no sign extension needed
+	SetParam(MAX_FIXED_POINT_LENGTH, numFracBits, length, numFracBits, fxValue);
+	return fxValue;
 }
 
 
@@ -91,25 +94,29 @@ fixedPoint::~fixedPoint() {
 
 
 int64_t fixedPoint::GetFracPart() {
-	int64_t mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask >> (MAX_FIXED_POINT_WIDTH - m_numFracBits);
+	// use modf here instead
+	uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+	mask = mask >> (MAX_FIXED_POINT_LENGTH - m_numFracBits);
 	return m_value & mask;
 }
 
 
 int64_t fixedPoint::GetFracPart(int numFracBits, int64_t value) {
-	int64_t mask = 0xFFFFFFFFFFFFFFFF;
-	mask = mask >> (MAX_FIXED_POINT_WIDTH - numFracBits);
+	// use modf here instead
+	uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+	mask = mask >> (MAX_FIXED_POINT_LENGTH - numFracBits);
 	return value & mask;
 }
 
 
 int64_t fixedPoint::GetIntPart() {
+	// use modf here instead
 	return (m_value >> m_numFracBits);
 }
 
 
 int64_t fixedPoint::GetIntPart(int length, int numFracBits, int64_t value) {
+	// use modf here instead
 	return (value >> numFracBits);
 }
 
@@ -120,106 +127,80 @@ int64_t fixedPoint::GetValue() {
 
 
 void fixedPoint::SetParam(int oldLength, int oldNumFracBits, int newLength, int newNumFracBits, fixedPoint_t *num_arry, int arryLength) {
-	if(oldLength != newLength && oldNumFracBits != newNumFracBits) {
-		for (int i = 0; i < arryLength; i++) {
-			int64_t fracPart = GetFracPart(oldNumFracBits, num_arry[i]);
-			int64_t intPart = GetIntPart(oldLength, oldNumFracBits, num_arry[i]);
+	if(oldLength != newLength || oldNumFracBits != newNumFracBits) {
+		for(int i = 0; i < arryLength; i++) {
+			if (oldNumFracBits > newNumFracBits) {
+				num_arry[i] = num_arry[i] >> (oldNumFracBits - newNumFracBits);
+			} else if (oldNumFracBits < newNumFracBits) {
+				num_arry[i] = num_arry[i] << (newNumFracBits - oldNumFracBits);
+			}
+			
 			int currentNumIntBits = (oldLength - oldNumFracBits);
 			int newNumIntBits = newLength - newNumFracBits;
-			
-			// Get sign of number
 			bool negative = (num_arry[i] < 0) ? true : false;
-
-
-			if (oldNumFracBits > newNumFracBits) {
-				fracPart = fracPart >> (oldNumFracBits - newNumFracBits);
-			} else if (oldNumFracBits < newNumFracBits) {
-				fracPart = fracPart << (newNumFracBits - oldNumFracBits);
-			}
-
-
 			if (!negative && newNumIntBits < currentNumIntBits) {
-				int64_t mask = 0xFFFFFFFFFFFFFFFF;
-				mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
-				intPart = intPart & mask;
+				uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+				mask = mask << (MAX_FIXED_POINT_LENGTH - newLength);
+				mask = mask >> (MAX_FIXED_POINT_LENGTH - newLength);
+				num_arry[i] = num_arry[i] & mask;
 			} else if (negative && newNumIntBits < currentNumIntBits) {
-				// sign extend
-				int64_t mask = 0xFFFFFFFFFFFFFFFF;
-				mask = mask << (newNumIntBits);
-				intPart = intPart | mask;
+				uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+				mask = mask << newLength;
+				num_arry[i] = num_arry[i] | mask;	// assuming no casting issues here
 			}
-
-			num_arry[i] = ((intPart << newNumFracBits) | fracPart);
 		}
 	}
 }
 
 
 void fixedPoint::SetParam(int oldLength, int oldNumFracBits, int newLength, int newNumFracBits, fixedPoint_t &num) {
-	if(oldLength != newLength && oldNumFracBits != newNumFracBits) {
-		int64_t fracPart = GetFracPart(oldNumFracBits, num);
-		int64_t intPart = GetIntPart(oldLength, oldNumFracBits, num);
-		int currentNumIntBits = (oldLength - oldNumFracBits);
-		int newNumIntBits = newLength - newNumFracBits;
-			
-		// Get sign of number
-		bool negative = (num < 0) ? true : false;
-
+	if(oldLength != newLength || oldNumFracBits != newNumFracBits) {
 		if (oldNumFracBits > newNumFracBits) {
-			fracPart = fracPart >> (oldNumFracBits - newNumFracBits);
+			num = num >> (oldNumFracBits - newNumFracBits);
 		} else if (oldNumFracBits < newNumFracBits) {
-			fracPart = fracPart << (newNumFracBits - oldNumFracBits);
+			num = num << (newNumFracBits - oldNumFracBits);
 		}
-
-
+		
+		int currentNumIntBits = (oldLength - oldNumFracBits);			
+		int newNumIntBits = newLength - newNumFracBits;
+		bool negative = (num < 0) ? true : false;
 		if (!negative && newNumIntBits < currentNumIntBits) {
-			int64_t mask = 0xFFFFFFFFFFFFFFFF;
-			mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
-			intPart = intPart & mask;
+			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+			mask = mask << (MAX_FIXED_POINT_LENGTH - newLength);
+			mask = mask >> (MAX_FIXED_POINT_LENGTH - newLength);
+			num = num & mask;
 		} else if (negative && newNumIntBits < currentNumIntBits) {
-			// sign extend
-			int64_t mask = 0xFFFFFFFFFFFFFFFF;
-			mask = mask << (newNumIntBits);
-			intPart = intPart | mask;
+			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+			mask = mask << newLength;
+			num = num | mask;	// assuming no casting issues here
 		}
-
-		num = ((intPart << newNumFracBits) | fracPart);
 	}
 }
 
 
-void fixedPoint::SetParam(int length, int numFracBits) {
-	if (m_length != length && m_numFracBits != numFracBits) {
-		int64_t fracPart = GetFracPart();
-		int64_t intPart = GetIntPart();
-		// Get sign of number
+void fixedPoint::SetParam(int newLength, int newNumFracBits) {
+	if (m_length != newLength || m_numFracBits != newNumFracBits) {
+		if (m_numFracBits > newNumFracBits) {
+			m_value = m_value >> (m_numFracBits - newNumFracBits);
+		} else if (m_numFracBits < newNumFracBits) {
+			m_value = m_value << (newNumFracBits - m_numFracBits);
+		}
+
+		int currentNumIntBits = (m_length - m_numFracBits);			
+		int newNumIntBits = newLength - newNumFracBits;
 		bool negative = (m_value < 0) ? true : false;
-		int currentNumIntBits = (m_length - m_numFracBits);
-		int newNumIntBits = length - numFracBits;
-
-		if (m_numFracBits > numFracBits) {
-			fracPart = fracPart >> (m_numFracBits - numFracBits);
-		}
-		else if (m_numFracBits < numFracBits) {
-			fracPart = fracPart << (numFracBits - m_numFracBits);
-		}
-
-
 		if (!negative && newNumIntBits < currentNumIntBits) {
-			int64_t mask = 0xFFFFFFFFFFFFFFFF;
-			mask = mask >> (MAX_FIXED_POINT_WIDTH - newNumIntBits);
-			intPart = intPart & mask;
+			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+			mask = mask << (MAX_FIXED_POINT_LENGTH - newLength);
+			mask = mask >> (MAX_FIXED_POINT_LENGTH - newLength);
+			m_value = m_value & mask;
 		} else if (negative && newNumIntBits < currentNumIntBits) {
-			// sign extend
-			int64_t mask = 0xFFFFFFFFFFFFFFFF;
-			mask = mask << (newNumIntBits);
-			intPart = intPart | mask;
+			uint64_t mask = 0xFFFFFFFFFFFFFFFF;
+			mask = mask << newLength;
+			m_value = m_value | mask;	// assuming no casting issues here
 		}
-
-		m_numFracBits = numFracBits;
-		m_length = length;
-
-		m_value = ((intPart << numFracBits) | fracPart);
+		m_numFracBits = newNumFracBits;
+		m_length = newLength;
 	}
 }
 
@@ -235,6 +216,7 @@ float fixedPoint::toFloat(int numFracBits, int64_t value) {
 
 
 fixedPoint operator+(fixedPoint &operand0, fixedPoint &operand1) {
+	// redo this function for getting sign bit
 	// verify there are not casting issues when using uint64_t here
 #ifdef NUMERIC_CHECKING
 	if (operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
@@ -258,6 +240,7 @@ fixedPoint operator+(fixedPoint &operand0, fixedPoint &operand1) {
 
 
 fixedPoint operator-(fixedPoint &operand0, fixedPoint &operand1) {
+	// redo this function for getting sign bit
 	// verify there are not casting issues when using uint64_t here
 #ifdef NUMERIC_CHECKING
 	if (operand0.m_length != operand0.m_length || operand1.m_numFracBits != operand1.m_numFracBits) {
@@ -293,6 +276,7 @@ fixedPoint operator/(fixedPoint &operand0, fixedPoint &operand1) {
 
 
 fixedPoint& fixedPoint::operator+=(fixedPoint &rhs) {
+	// redo this function for getting sign bit
 	// verify there are not casting issues when using uint64_t here
 #ifdef NUMERIC_CHECKING   
 	if (this->m_length != rhs.m_length || this->m_numFracBits != rhs.m_numFracBits) {
@@ -316,6 +300,7 @@ fixedPoint& fixedPoint::operator+=(fixedPoint &rhs) {
 
 
 fixedPoint& fixedPoint::operator-=(fixedPoint &rhs) {
+	// redo this function for getting sign bit
 	// verify there are not casting issues when using uint64_t here		
 #ifdef NUMERIC_CHECKING
 	if (this->m_length != rhs.m_length || this->m_numFracBits != rhs.m_numFracBits) {

@@ -1,8 +1,8 @@
 #ifndef __FIXED_POINT_HPP__
 #define __FIXED_POINT_HPP__
 
-#define MAX_FIXED_POINT_WIDTH	64
-#define DEFAULT_FRAC_WIDTH		32
+#define MAX_FIXED_POINT_LENGTH	64
+#define DEFAULT_NUM_FRAC_BITS	32
 
 
 #include <stdint.h>
@@ -49,16 +49,16 @@ class fixedPoint {
 		fixedPoint(int64_t value);
 		fixedPoint(float value);
 		fixedPoint(int length, int numFracBits);					
-		fixedPoint(int length, int numFracBits, int64_t value, bool normalize);
+		fixedPoint(int length, int numFracBits, int64_t value, bool normalize = true);
 		fixedPoint(int length, int numFracBits, float value);
-		static fixedPoint_t create(int numFracBits, float value);
+		static fixedPoint_t create(int length, int numFracBits, float value);
 		~fixedPoint();
 		int64_t GetFracPart();
 		static int64_t GetFracPart(int numFracBits, int64_t value);
 		int64_t GetIntPart();
 		static int64_t GetIntPart(int length, int numFracBits, int64_t value);
 		int64_t GetValue();
-		void SetParam(int length, int numFracBits);
+		void SetParam(int newLength, int newNumFracBits);
         static void SetParam(int oldLength, int oldNumFracBits, int newLength, int newNumFracBits, fixedPoint_t &num);
 		static void SetParam(int oldLength, int oldNumFracBits, int newLength, int newNumFracBits, fixedPoint_t *num_arry, int arryLength);
 		float toFloat();
