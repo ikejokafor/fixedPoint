@@ -26,20 +26,6 @@
 #endif
 
 
-// Notes:
-//		Be sure to use SetParam() to make sure values are the correct bit widths.
-//		No alignment is done before or after arithmetic. The params of operand0 are assumed for overflow calculation 
-//		for airthmetic operations where the bit width would remain the same (ie addition or substraction) and the DSP48_WIDTH
-//		macros for multiplication
-//
-//		reinterpret cast are used to ensure no casting issues across windows or linux
-//
-//		Warnings about casting from unsigned numbers to signed numbers can be ignored
-//
-//      For mult() or div() ensure that the length, and numFracbits passed in is less than or equal to the products length or numFracBits
-//
-//      TODO: for create function, must chop of top bits to make sure integer portion is correct
-
 typedef int64_t fixedPoint_t;
 
 class fixedPoint {
