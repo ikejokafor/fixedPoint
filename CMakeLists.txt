@@ -90,31 +90,61 @@ ADD_LIBRARY(${TARGET_NAME} STATIC ${TARGET_SRCS} ${TARGET_HEADERS})
 # END Target Settings -------------------------------------------------------------------------------------------------------------------------------
 
 
-# BEGIN Set Output Path for libs or bins ------------------------------------------------------------------------------------------------------------                
-SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
-                        ARCHIVE_OUTPUT_DIRECTORY 
-                        ${PROJECT_SOURCE_DIR}/build/)                        
-# END Set Output Path for libs or bins --------------------------------------------------------------------------------------------------------------
-
-
 # BEGIN Build dependencies --------------------------------------------------------------------------------------------------------------------------
 #add_dependencies(${TARGET_NAME} [<target-dependency>]...)
 # END Build dependencies ----------------------------------------------------------------------------------------------------------------------------
 
 
 # BEGIN Debug / Release Settings --------------------------------------------------------------------------------------------------------------------
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE Release)
-endif()
-set(CMAKLE_CXX_FLAGS_DEBUG "-g")
-set(CMAKLE_CXX_FLAGS_RELEASE "-O3")
+IF(EXISTS "${PROJECT_SOURCE_DIR}/DEBUG_BUILD")
+    SET(CMAKE_BUILD_TYPE Debug)
+	SET(BUILD_DIR_SUFFIX "debug")
+ELSEIF(EXISTS "${PROJECT_SOURCE_DIR}/RELEASE_BUILD")
+    SET(CMAKE_BUILD_TYPE Release)
+	SET(BUILD_DIR_SUFFIX "release")
+ELSEIF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE Debug)
+	SET(BUILD_DIR_SUFFIX "debug")
+ENDIF()
+IF(WIN32)
+	SET(CMAKE_CXX_FLAGS_DEBUG "/ZI /Od")
+ELSE()
+	SET(CMAKE_CXX_FLAGS_DEBUG "-g")
+ENDIF()
+SET(CMAKE_CXX_FLAGS_RELEASE "-O3")
+MESSAGE("[" ${TARGET_NAME} "] Build Type: " ${CMAKE_BUILD_TYPE})
 # END Debug / Release Settings ----------------------------------------------------------------------------------------------------------------------
+
+
+# BEGIN Set Output Path for libs or bins ------------------------------------------------------------------------------------------------------------
+SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+                        RUNTIME_OUTPUT_DIRECTORY_DEBUG 
+                        ${PROJECT_SOURCE_DIR}/build/debug)
+SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+                        RUNTIME_OUTPUT_DIRECTORY_RELEASE 
+                        ${PROJECT_SOURCE_DIR}/build/release)
+            
+SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+                        LIBRARY_OUTPUT_DIRECTORY_DEBUG 
+                        ${PROJECT_SOURCE_DIR}/build/debug)
+SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+                        LIBRARY_OUTPUT_DIRECTORY_RELEASE
+                        ${PROJECT_SOURCE_DIR}/build/release)
+             
+SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+                        ARCHIVE_OUTPUT_DIRECTORY_DEBUG
+                        ${PROJECT_SOURCE_DIR}/build/debug)
+SET_TARGET_PROPERTIES(${TARGET_NAME} PROPERTIES
+                        ARCHIVE_OUTPUT_DIRECTORY_RELEASE
+                        ${PROJECT_SOURCE_DIR}/build/release)                     
+# END Set Output Path for libs or bins --------------------------------------------------------------------------------------------------------------
 
 
 # BEGIN Compiler Flags ------------------------------------------------------------------------------------------------------------------------------
 TARGET_COMPILE_OPTIONS(${TARGET_NAME} PUBLIC 
-    "-std=c++11" 
+    "-std=c++1y"
     "-Wall"
+    "-fPIC"
     "-fexceptions"
 )
 # END Compiler Flags --------------------------------------------------------------------------------------------------------------------------------
