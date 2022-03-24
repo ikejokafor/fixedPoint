@@ -39,7 +39,7 @@ CCC = g++
 
 
 # library paths
-LIBS = -L/usr/lib/ -L/usr/local/lib/ -lm
+LIBS = -L/usr/lib/ -L/usr/local/lib/
 
 
 .SUFFIXES: .cpp
